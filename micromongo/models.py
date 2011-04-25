@@ -79,6 +79,30 @@ class Model(OpenStruct):
         cls._collection_key = key
         AccountingMeta.collection_map[key] = cls
 
+    def verify(self):
+        # if there is a spec, check this document against the spec
+        if not getattr(self, 'spec', False):
+            return
+        # check if any required fields were left out
+        if required in self.values():
+            missing = [k for k,v in self.items() if v is required]
+            raise Exception("Required fields missing: %s" % (missing))
+        for k,v in self.spec.items():
+            if isinstance(v, list):
+                if self[k] not in v:
+                    msg = "Key %s does not match spec (%r not in %r)"
+                    raise TypeError(msg % (k, self[k], v))
+            elif v.__class__ is type:
+                if v in (str, unicode):
+                    v = basestring
+                if not isinstance(self[k], v):
+                    msg = "Key %s does not match spec (%r is not a(n) %r)"
+                    raise TypeError(msg % (k, self[k], v))
+            elif callable(v):
+                if not v(self[k]):
+                    msg = "Key %s does not match spec function %r"
+                    raise TypeError(msg % (k, v))
+
     def save(self):
         if hasattr(self, 'pre_save'):
             pre_save(self)
