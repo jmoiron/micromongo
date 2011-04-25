@@ -16,6 +16,10 @@ required = uuid4().hex
 __connection_args = tuple()
 __connection = None
 
+def current():
+    global __connection
+    return __connection
+
 def connect(*args, **kwargs):
     """Connect to the database.  Passes arguments along to
     ``pymongo.connection.Connection`` unmodified.
@@ -62,6 +66,15 @@ class AccountingMeta(type):
     def route(collection_full_name):
         return AccountingMeta.collection_map.get(collection_full_name, dict)
 
+# NOTE: There's a current feature request with py_mongo to make the as_class
+# option only apply to the highest level documents and not to the subdocuments.
+#
+#    https://jira.mongodb.org/browse/PYTHON-175
+#
+# until this is implemented, micromongo will have to add incoming son
+# manipulators to make sure that subdocuments do not have the document class,
+# which will most likely slow down saving but not impact other stuff
+
 class Model(OpenStruct):
     """Micromongo Model object."""
     __metaclass__ = AccountingMeta
@@ -105,11 +118,11 @@ class Model(OpenStruct):
 
     def save(self):
         if hasattr(self, 'pre_save'):
-            pre_save(self)
+            self.pre_save(self)
         database, collection = self._collection_key.split('.')
         self.verify()
-        __connection[database][collection].save(self)
+        current()[database][collection].save(dict(self))
         if hasattr(self, 'post_save'):
-            post_save(self)
+            self.post_save(self)
 
 

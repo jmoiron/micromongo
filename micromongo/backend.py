@@ -9,13 +9,53 @@ to that, so we introduce the concept of a class router which is any function
 that takes a collection's full name and returns a new object of the appropriate
 class to be used as a cursor's "as_class"."""
 
+import os
+from pprint import pprint
+
+import pymongo
+
 from pymongo.connection import Connection as PymongoConnection
 from pymongo.database import Database as PymongoDatabase
 from pymongo.collection import Collection as PymongoCollection
 from pymongo.cursor import Cursor as PymongoCursor
+from pymongo.son_manipulator import SONManipulator
 
 def default_class_router(collection_full_name):
     return dict()
+
+def from_env():
+    """Get host/port settings from the environment."""
+    if 'MICROMONGO_URI' in os.environ:
+        return (os.environ['MICROMONGO_URI'],)
+    host = os.environ.get('MICROMONGO_HOST', 'localhost')
+    port = int(os.environ.get('MICROMONGO_PORT', 27017))
+    return (host, port)
+
+# NOTE: There's a current feature request with py_mongo to make the as_class
+# option only apply to the highest level documents and not to the subdocuments.
+#
+#    https://jira.mongodb.org/browse/PYTHON-175
+#
+# until this is implemented, micromongo will have to add incoming son
+# manipulators to make sure that subdocuments do not have the document class,
+# which will most likely slow down saving but not impact other stuff
+require_manipulator = map(int, pymongo.version.split('.')) < (1, 11)
+
+class ModelSONManipulator(SONManipulator):
+    """Manipulator to coerce all of instances of our Model class to dicts within
+    the SON going into mongodb."""
+    def transform_incoming(self, son, collection):
+        from models import Model
+        def unmodel(value):
+            value = dict(value)
+            for k,v in value.items():
+                if isinstance(v, Model):
+                    value[k] = unmodel(v)
+            return value
+        for k,v in son.items():
+            if isinstance(v, Model):
+                son[k] = unmodel(v)
+        return son
 
 class Connection(PymongoConnection):
     def __init__(self, *args, **kwargs):
@@ -23,7 +63,10 @@ class Connection(PymongoConnection):
         super(Connection, self).__init__(*args, **kwargs)
 
     def __getattr__(self, name):
-        return Database(self, name)
+        db = Database(self, name)
+        if require_manipulator:
+            db.add_son_manipulator(ModelSONManipulator())
+        return db
 
 class Database(PymongoDatabase):
     def __getattr__(self, name):

@@ -38,10 +38,7 @@ class OpenStruct(object):
     def __getitem__(self, item):
         if item in self.__dict__:
             return self.__dict__[item]
-        try:
-            return object.__getattribute__(self, item)
-        except AttributeError:
-            return None
+        return object.__getattribute__(self, item)
     def __setitem__(self, item, value): self.__dict__[item] = value
     def __delitem__(self, item):
         if item in self.__dict__:
