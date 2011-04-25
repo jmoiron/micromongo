@@ -35,8 +35,8 @@ class Collection(PymongoCollection):
 
 class Cursor(PymongoCursor):
     def __init__(self, *args, **kwargs):
-        super(Cursor, self).__init__(*args, **kwargs)
         collection = self.__collection
         connection = collection.database.connection
-        self.as_class = connection.class_router(collection.full_name)
+        kwargs['as_class'] = connection.class_router(collection.full_name)
+        super(Cursor, self).__init__(*args, **kwargs)
 

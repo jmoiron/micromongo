@@ -21,13 +21,6 @@ def memoize(function):
 def uncamel(name):
     """Convert a CamelCase name to a lower_underscore one.  From:
         http://stackoverflow.com/questions/1175208/
-
-    >>> uncamel('CamelCase')
-    'camel_case'
-    >>> uncamel('already_under')
-    'already_under'
-    >>> uncamel('getHTTPResponseCode')
-    'get_http_response_code'
     """
     s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
     return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()

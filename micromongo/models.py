@@ -41,7 +41,7 @@ def clean_connection():
     return PymongoConnection(*__connection_args[0], **__connection_args[1])
 
 def class_router(collection_full_name):
-    return AccountingMeta.route(collection_full_name)()
+    return AccountingMeta.route(collection_full_name)
 
 class AccountingMeta(type):
     """Metaclass for all model classes.
@@ -76,5 +76,16 @@ class Model(OpenStruct):
         else:
             module = cls.__module__.split('.')[-1]
             key = '%s.%s' % (uncamel(module), uncamel(cls.__name__))
+        cls._collection_key = key
         AccountingMeta.collection_map[key] = cls
+
+    def save(self):
+        if hasattr(self, 'pre_save'):
+            pre_save(self)
+        database, collection = self._collection_key.split('.')
+        self.verify()
+        __connection[database][collection].save(self)
+        if hasattr(self, 'post_save'):
+            post_save(self)
+
 
