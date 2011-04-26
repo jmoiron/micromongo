@@ -141,8 +141,23 @@ If a field in p is given an invalid type, then a ``ValueError`` is raised::
     >>> p.body = u"This is my first blog post..  I'm so excited!"
     >>> p.save()
 
+Model.find
+~~~~~~~~~~
+
+For convenience and DRY, ``Model.find`` is a classmethod that will use
+micromongo's cursor to issue a find against the right collection.  This method
+behaves exactly the same as `pymongo's Collection.find`_.
+
+micromongo's slightly modified ``Cursor`` class also makes a django-inspired
+``order_by`` method available to all cursors (``find`` and anything you chain
+off if it returns a cursor).  You can pass one or more field names, with an
+optional leading '-', to sort things by ascending or descending order.
+
+These changes allow you to use most of the power of pymongo without having to
+import it, and lets you avoid needless repetition of the location of your data.
+
 field subclassing
------------------
+~~~~~~~~~~~~~~~~~
 
 You are encouraged to create your own Fields that do what you want.  Field 
 subclasses have a hook function ``pre_validate`` which take an incoming value
@@ -151,5 +166,7 @@ fields are actually present; so to get something like an ``auto_now_add`` on a
 ``DateTimeField``, you will want to make it required and have its
 ``pre_validate`` turn ``None`` into ``datetime.datetime.now()``.
 
+
 .. _`pymongo's Connection`: http://api.mongodb.org/python/current/api/pymongo/connection.html
+.. _`pymongo's Collection.find`: http://api.mongodb.org/python/current/api/pymongo/collection.html#pymongo.collection.Collection.find
 

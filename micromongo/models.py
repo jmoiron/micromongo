@@ -91,6 +91,11 @@ class Model(OpenStruct):
         new.update(args[0] if args and not kwargs else kwargs)
         return new
 
+    @classmethod
+    def find(cls, *args, **kwargs):
+        database, collection = cls._collection_key.split('.')
+        return current()[database][collection].find(*args, **kwargs)
+
     def validate(self):
         """Validate this object based on its classes spec document."""
         return validate(self, getattr(self, 'spec', None))
