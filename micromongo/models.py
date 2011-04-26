@@ -107,13 +107,13 @@ class Model(OpenStruct):
         are called.  If there is a spec document, then the documnet is
         validated against it after the ``pre_save`` hook but before the save."""
         if hasattr(self, 'pre_save'):
-            self.pre_save(self)
+            self.pre_save()
         database, collection = self._collection_key.split('.')
         self.validate()
         _id = current()[database][collection].save(dict(self))
         if _id: self._id = _id
         if hasattr(self, 'post_save'):
-            self.post_save(self)
+            self.post_save()
 
     def __repr__(self):
         return '<%s: %s>' % (self.__class__.__name__, pformat(dict(self)))
