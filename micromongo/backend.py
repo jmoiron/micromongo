@@ -47,13 +47,18 @@ class ModelSONManipulator(SONManipulator):
     def transform_incoming(self, son, collection):
         from models import Model
         def unmodel(value):
-            value = dict(value)
+            if isinstance(value, Model):
+                value = dict(value)
+            elif isinstance(value, list):
+                return [unmodel(x) for x in value]
+            else:
+                return value
             for k,v in value.items():
-                if isinstance(v, Model):
+                if isinstance(v, (Model, list)):
                     value[k] = unmodel(v)
             return value
         for k,v in son.items():
-            if isinstance(v, Model):
+            if isinstance(v, (Model, list)):
                 son[k] = unmodel(v)
         return son
 

@@ -73,3 +73,48 @@ class ModelTest(TestCase):
         d2 = col.find_one({'docid': 18})
         self.assertEqual(d2.subdoc.test, 3)
 
+class SONManipulatorTest(TestCase):
+    def tearDown(self):
+        from micromongo.models import AccountingMeta
+        AccountingMeta.collection_map = {}
+        c = connect(*from_env())
+        # dropping the db makes tests time consuming
+        c.test_db.drop_collection('test_collection')
+
+    def test_dicts(self):
+        """Test that nested dicts get un-documented."""
+        # NOTE, the saves here would raise an exception and fail the test
+        # if the underlying manipulator was not functioning properly
+        c = connect(*from_env())
+        col = c.test_db.test_collection
+
+        class Foo(Model):
+            collection = col.full_name
+
+        col.save({'foo': {'bar': {'baz': 1}}})
+        col.save({'foo': 1, 'bar': {'baz': 1}})
+
+        self.assertEqual(Foo.find().count(), 2)
+
+        for f in Foo.find():
+            f.save()
+
+    def test_lists(self):
+        """Test that nested lists get un-documented."""
+        # NOTE, the saves here would raise an exception and fail the test
+        # if the underlying manipulator was not functioning properly
+        c = connect(*from_env())
+        col = c.test_db.test_collection
+
+        class Foo(Model):
+            collection = col.full_name
+
+        col.save({'foo': [{'one': 1}, 'two', {'three': {'3':4}}]})
+        col.save({'foo': [{'one': [1, 2, {'three': 3, 'four': [1,2,3, {
+            'five': [5]}]}]}]})
+
+        self.assertEqual(Foo.find().count(), 2)
+
+        for f in Foo.find():
+            f.save()
+
