@@ -101,8 +101,8 @@ saving the model.  Take a trivial blog post model::
     >>> class Post(Model):
             collection = 'test_db.blog_posts'
             spec = dict(
-                author=Field(default='jmoiron', required=True, type=unicode),
-                title=Field(required=True, default='', type=unicode),
+                author=Field(required=True, default='jmoiron', type=basestring),
+                title=Field(required=False, default='', type=basestring),
                 published=Field(required=True, default=False, type=[True, False]),
                 body=Field(type=unicode),
                 timestamp=Field(),
@@ -110,7 +110,46 @@ saving the model.  Take a trivial blog post model::
 
     >>> p = Post.new()
     >>> p
+    <Post: {'title': u'', 'author': u'jmoiron', 'published': False}>
 
+A few things are going on here.  Fields that have a default are initialized to
+that default whether they are required or not.  If a required field does not
+have a default, it's initialized to ``None``.
+
+Fields can take a ``type`` argument, which can either be a callable that takes
+a value and returns True or False, one or more base types, or one or more
+values.  If one or more types are provided, ``isinstance`` is used to test that
+values are the right type.  If one or more values are provided, the Field acts
+as an enum type, checking that values are in its set of values.  If no type is
+given, validation always passes on a field *unless* it is required and absent.
+
+If a field in p is given an invalid type, then a ``ValueError`` is raised::
+
+    >>> p.title = 10
+    >>> p.save()
+    Traceback (most recent call last):
+      ...
+    ValueError: Keys did not match spec: ['title']
+    >>> del p.author
+    >>> p.save()
+    Traceback (most recent call last):
+      ...
+    ValueError: Missing fields: ['author'], Invalid fields: ['title']
+    >>> p.title = 'My first blogpost'
+    >>> p.author = 'jmoiron'
+    >>> p.published = True
+    >>> p.body = u"This is my first blog post..  I'm so excited!"
+    >>> p.save()
+
+field subclassing
+-----------------
+
+You are encouraged to create your own Fields that do what you want.  Field 
+subclasses have a hook function ``pre_validate`` which take an incoming value
+and can transform it however they want.  Note that this will only work if the
+fields are actually present; so to get something like an ``auto_now_add`` on a
+``DateTimeField``, you will want to make it required and have its
+``pre_validate`` turn ``None`` into ``datetime.datetime.now()``.
 
 .. _`pymongo's Connection`: http://api.mongodb.org/python/current/api/pymongo/connection.html
 

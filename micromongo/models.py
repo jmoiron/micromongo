@@ -3,7 +3,7 @@
 
 """micromongo models"""
 
-from pprint import pprint
+from pprint import pprint, pformat
 
 from pymongo import Connection as PymongoConnection
 
@@ -110,4 +110,6 @@ class Model(OpenStruct):
         if hasattr(self, 'post_save'):
             self.post_save(self)
 
+    def __repr__(self):
+        return '<%s: %s>' % (self.__class__.__name__, pformat(dict(self)))
 
