@@ -4,7 +4,6 @@
 """Setup script for micromongo."""
 
 from setuptools import setup, find_packages
-import sys, os
 
 version = '0.1'
 
@@ -21,7 +20,10 @@ setup(
     long_description=open('README.rst').read(),
     # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
-        'Development Status :: 1 - Planning',
+        'Development Status :: 3 - Alpha',
+        'Topic :: Database :: Front-Ends',
+        'License :: OSI Approved :: MIT License',
+        'Intended Audience :: Developers',
     ],
     keywords='mongodb orm',
     author='Jason Moiron',
@@ -33,9 +35,8 @@ setup(
     zip_safe=False,
     test_suite="tests",
     install_requires=[
-      # -*- Extra requirements: -*-
+        'pymongo',
     ],
-    entry_points="""
     # -*- Entry points: -*-
-    """,
+    entry_points="",
 )
