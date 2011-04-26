@@ -3,15 +3,15 @@
 
 """micromongo models"""
 
-from uuid import uuid4
 from pprint import pprint
 
 from pymongo import Connection as PymongoConnection
 
 from micromongo.utils import OpenStruct, uncamel
 from micromongo.backend import Connection
+from micromongo.spec import validate, make_default
 
-required = uuid4().hex
+__all__ = ['current', 'connect', 'clean_connection', 'Model']
 
 __connection_args = tuple()
 __connection = None
@@ -66,14 +66,6 @@ class AccountingMeta(type):
     def route(collection_full_name):
         return AccountingMeta.collection_map.get(collection_full_name, dict)
 
-# NOTE: There's a current feature request with py_mongo to make the as_class
-# option only apply to the highest level documents and not to the subdocuments.
-#
-#    https://jira.mongodb.org/browse/PYTHON-175
-#
-# until this is implemented, micromongo will have to add incoming son
-# manipulators to make sure that subdocuments do not have the document class,
-# which will most likely slow down saving but not impact other stuff
 
 class Model(OpenStruct):
     """Micromongo Model object."""
@@ -92,36 +84,29 @@ class Model(OpenStruct):
         cls._collection_key = key
         AccountingMeta.collection_map[key] = cls
 
-    def verify(self):
-        # if there is a spec, check this document against the spec
-        if not getattr(self, 'spec', False):
-            return
-        # check if any required fields were left out
-        if required in self.values():
-            missing = [k for k,v in self.items() if v is required]
-            raise Exception("Required fields missing: %s" % (missing))
-        for k,v in self.spec.items():
-            if isinstance(v, list):
-                if self[k] not in v:
-                    msg = "Key %s does not match spec (%r not in %r)"
-                    raise TypeError(msg % (k, self[k], v))
-            elif v.__class__ is type:
-                if v in (str, unicode):
-                    v = basestring
-                if not isinstance(self[k], v):
-                    msg = "Key %s does not match spec (%r is not a(n) %r)"
-                    raise TypeError(msg % (k, self[k], v))
-            elif callable(v):
-                if not v(self[k]):
-                    msg = "Key %s does not match spec function %r"
-                    raise TypeError(msg % (k, v))
+    @classmethod
+    def new(cls, *args, **kwargs):
+        """Create a new instance of this model based on the spec."""
+        new = cls(make_default(getattr(cls, 'spec', {})))
+        new.update(args[0] if args and not kwargs else kwargs)
+        return new
+
+    def validate(self):
+        """Validate this object based on its classes spec document."""
+        return validate(self, getattr(self, 'spec', None))
 
     def save(self):
+        """Save this object to the database.  Behaves very similarly to
+        whatever collection.save(document) would, ie. does upserts on _id
+        presence.  If methods ``pre_save`` or ``post_save`` are defined, those
+        are called.  If there is a spec document, then the documnet is
+        validated against it after the ``pre_save`` hook but before the save."""
         if hasattr(self, 'pre_save'):
             self.pre_save(self)
         database, collection = self._collection_key.split('.')
-        self.verify()
-        current()[database][collection].save(dict(self))
+        self.validate()
+        _id = current()[database][collection].save(dict(self))
+        if _id: self._id = _id
         if hasattr(self, 'post_save'):
             self.post_save(self)
 

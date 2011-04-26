@@ -29,26 +29,26 @@ class ModelTest(TestCase):
         col.save({'docid': 2, 'uuid': uuids[2]})
 
         d1 = col.find_one({'docid': 0})
-        self.assertEquals(type(d1), dict)
-        self.assertEquals(d1['uuid'], uuids[d1['docid']])
+        self.assertEqual(type(d1), dict)
+        self.assertEqual(d1['uuid'], uuids[d1['docid']])
 
         class Foo(Model):
             collection = col.full_name
 
         # sanity check the correctness of these documents
         d1 = col.find_one({'docid': 0})
-        self.assertEquals(type(d1), Foo)
-        self.assertEquals(d1.docid, 0)
+        self.assertEqual(type(d1), Foo)
+        self.assertEqual(d1.docid, 0)
         for i in range(3):
             d = col.find_one({'docid': i})
-            self.assertEquals(d.uuid, uuids[d.docid])
+            self.assertEqual(d.uuid, uuids[d.docid])
 
         d2 = col.find_one({'docid': 1})
         d2.uuid = uuid()
         d2.save()
 
         d3 = col.find_one({'docid': 1})
-        self.assertEquals(d3.uuid, d2.uuid)
+        self.assertEqual(d3.uuid, d2.uuid)
         self.assertTrue(d3.uuid != uuids[d3.docid])
 
     def test_son_manipulator(self):
@@ -71,5 +71,5 @@ class ModelTest(TestCase):
         d.save()
 
         d2 = col.find_one({'docid': 18})
-        self.assertEquals(d2.subdoc.test, 3)
+        self.assertEqual(d2.subdoc.test, 3)
 

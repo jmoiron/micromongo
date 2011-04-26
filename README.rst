@@ -24,8 +24,8 @@ might not work for you:
 
 .. _`full docs`: http://packages.python.org/micromongo/
 
-usage
------
+getting started
+---------------
 
 To start off with micromongo, just import it::
 
@@ -80,6 +80,36 @@ The documents are also easily persisted to the database::
     >>> t.save()
     >>> clean.test_db.test_collection.find_one()
     {u'_id': ObjectId('...'), u'fail': False, u'docid': 17}
+
+defining models
+---------------
+
+Above, the ``collection`` attribute was assigned to our ``Foo`` model.  This
+was a shortcut, though;  if ``database`` and ``collection`` are assigned
+separately, the Model can figure out the full collection name.  If the
+collection and database are not present, micromongo attempts to figure it out
+based on the class and module name of your Model.  For instance, ``blog.Post``
+will become ``blog.post``, or ``stream.StreamEntry`` will become
+``stream.stream_entry``.  Explicit is better than implicit, and it's encouraged
+that you set the collection manually.
+
+Besides packing and unpacking results from the database, models can also define
+a ``spec`` document which can define defaults and perform validation before
+saving the model.  Take a trivial blog post model::
+
+    >>> from micromongo.spec import *
+    >>> class Post(Model):
+            collection = 'test_db.blog_posts'
+            spec = dict(
+                author=Field(default='jmoiron', required=True, type=unicode),
+                title=Field(required=True, default='', type=unicode),
+                published=Field(required=True, default=False, type=[True, False]),
+                body=Field(type=unicode),
+                timestamp=Field(),
+            )
+
+    >>> p = Post.new()
+    >>> p
 
 
 .. _`pymongo's Connection`: http://api.mongodb.org/python/current/api/pymongo/connection.html
