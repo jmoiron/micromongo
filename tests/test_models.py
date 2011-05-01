@@ -118,3 +118,20 @@ class SONManipulatorTest(TestCase):
         for f in Foo.find():
             f.save()
 
+    def test_reiteration(self):
+        """Test that cursors can be re-iterated."""
+        c = connect(*from_env())
+        col = c.test_db.test_collection
+
+        class Foo(Model):
+            collection = col.full_name
+
+        col.save({'foo': [{'one': 1}, 'two', {'three': {'3':4}}]})
+        col.save({'foo': [{'one': [1, 2, {'three': 3, 'four': [1,2,3, {
+            'five': [5]}]}]}]})
+
+        foos = Foo.find()
+
+        self.assertEqual(len(list(foos)), 2)
+        self.assertEqual(len(list(foos)), 2)
+

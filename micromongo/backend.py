@@ -88,6 +88,10 @@ class Cursor(PymongoCursor):
         connection = collection.database.connection
         self.as_class = connection.class_router(collection.full_name)
         self.__as_class = connection.class_router(collection.full_name)
+        # cache the iteration so we can iterate over results from these
+        # cursors more than once;  we only do this if it is not "tailable"
+        self.__itercache = []
+        self.__fullcache = False
 
     def order_by(self, *fields):
         """An alternate to ``sort`` which allows you to specify a list
@@ -100,3 +104,21 @@ class Cursor(PymongoCursor):
                 doc.append((field, pymongo.ASCENDING))
         return self.sort(doc)
 
+    def __iter__(self):
+        if self.__fullcache and not self.__tailable:
+            return iter(self.__itercache)
+        return self
+
+    def next(self):
+        """A `next` that caches the returned results.  Together with the
+        slightly different `__iter__`, these cursors can be iterated over
+        more than once."""
+        if self.__tailable:
+            return PymongoCursor.next(self)
+        try:
+            ret = PymongoCursor.next(self)
+        except StopIteration:
+            self.__fullcache = True
+            raise
+        self.__itercache.append(ret)
+        return ret
