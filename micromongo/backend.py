@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""A set of minimal subclasses around pymongo to get the desired "as_class"
-behavior we want without resorting to inspect hackery (which was too slow).
+"""The backend contains a set of minimal subclasses around pymongo to get
+the desired "as_class" behavior we want without resorting to inspect
+hackery (which was too slow) or inserting hooks at every unpacking step,
+subclassing much of pymongo and in the process creating a heavy maintenance
+burden.
 
 Because the bson wrapping can happen in C code, we don't have a lot of access
 to that, so we introduce the concept of a class router which is any function

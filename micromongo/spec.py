@@ -12,28 +12,33 @@ no_default = uuid4().hex
 
 class Field(object):
     """A base Field type, which itself can be used pretty reasonably to get
-    type coersion, field defaults, etc."""
+    type coersion, field defaults, etc.  If ``required`` is True, then
+    validation will fail if this field is NOT present in the document.
+    ``default`` is the default value to give this field in a new document;
+    if it is None and the field is not required, the field is not added to
+    new documents.  ``type`` is an object that can perform validation on
+    this field;  see documentation for ``Field.typecheck``."""
     def __init__(self, required=False, default=None, type=None):
         self.required = required
         self._default = default
         self._typecheck = self.typecheck(type)
 
     def typecheck(self, t):
-        """Create a typecheck from some value t.  This behaves differently
-        depending on what t is.  It should take a value and return True if
+        """Create a typecheck from some value ``t``.  This behaves differently
+        depending on what ``t`` is.  It should take a value and return True if
         the typecheck passes, or False otherwise.  Override ``pre_validate``
         in a child class to do type coercion.
 
-         * If t is a type, like basestring, int, float, *or* a tuple of base
-           types, then a simple isinstance typecheck is returned.
+        * If ``t`` is a type, like basestring, int, float, *or* a tuple of base
+          types, then a simple isinstance typecheck is returned.
 
-         * If t is a list or tuple of instances, such as a tuple or list of
-           integers or of strings, it's treated as the definition of an enum
-           and a simple "in" check is returned.
+        * If ``t`` is a list or tuple of instances, such as a tuple or list of
+          integers or of strings, it's treated as the definition of an enum
+          and a simple "in" check is returned.
 
-         * If t is callable, t itself is assumed to be a typecheck.
+        * If ``t`` is callable, ``t`` is assumed to be a valid typecheck.
 
-         * If t is None, a typecheck that always passes is returned.
+        * If ``t`` is None, a typecheck that always passes is returned.
 
         If none of these conditions are met, a TypeError is raised.
         """

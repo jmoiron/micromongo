@@ -86,25 +86,28 @@ class Model(OpenStruct):
 
     @classmethod
     def new(cls, *args, **kwargs):
-        """Create a new instance of this model based on the spec."""
+        """Create a new instance of this model based on its spec and either
+        a map or the provided kwargs."""
         new = cls(make_default(getattr(cls, 'spec', {})))
         new.update(args[0] if args and not kwargs else kwargs)
         return new
 
     @classmethod
     def find(cls, *args, **kwargs):
+        """Run a find on this model's collection.  The arguments to ``Model.find``
+        are the same as to ``pymongo.Collection.find``."""
         database, collection = cls._collection_key.split('.')
         return current()[database][collection].find(*args, **kwargs)
 
     def validate(self):
-        """Validate this object based on its classes spec document."""
+        """Validate this object based on its spec document."""
         return validate(self, getattr(self, 'spec', None))
 
     def save(self):
         """Save this object to the database.  Behaves very similarly to
         whatever collection.save(document) would, ie. does upserts on _id
         presence.  If methods ``pre_save`` or ``post_save`` are defined, those
-        are called.  If there is a spec document, then the documnet is
+        are called.  If there is a spec document, then the document is
         validated against it after the ``pre_save`` hook but before the save."""
         if hasattr(self, 'pre_save'):
             self.pre_save()
