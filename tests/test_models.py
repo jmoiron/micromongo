@@ -135,3 +135,12 @@ class SONManipulatorTest(TestCase):
         self.assertEqual(len(list(foos)), 2)
         self.assertEqual(len(list(foos)), 2)
 
+class MiscTest(TestCase):
+    def test_version(self):
+        """Test micromongo.VERSION."""
+        import setup
+        import micromongo
+        self.assertTrue(bool(micromongo.VERSION))
+        # make sure that it's the same as the version in setup.py
+        self.assertEqual('.'.join(map(str, micromongo.VERSION)), setup.version)
+

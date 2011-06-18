@@ -44,6 +44,11 @@ def clean_connection():
         raise Exception('must call `connect` before `clean_connection`')
     return PymongoConnection(*__connection_args[0], **__connection_args[1])
 
+def registered_models():
+    """Return the AccountingMeta's model mapping, which is a dictionary of
+    keys in the form of "db.collection" to model classes."""
+    return dict(AccountingMeta.collection_map)
+
 def class_router(collection_full_name):
     return AccountingMeta.route(collection_full_name)
 

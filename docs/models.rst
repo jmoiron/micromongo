@@ -143,5 +143,12 @@ You can also use ``pre_save`` to cache or calculate certain fields based off of
 others in the model.  A text document meant to be saved in markdown can have
 a calculated field ``prerendered`` that is set in this hook.
 
+Registration Access
+~~~~~~~~~~~~~~~~~~~
 
-            
+Micromongo keeps track of all models that have been registered.  For
+applications that might want to use this data, a function providing a mapping
+of their database location to the model class is provided:
+
+.. autofunction:: micromongo.models.registered_models
+

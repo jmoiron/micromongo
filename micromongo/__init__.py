@@ -6,5 +6,8 @@
 from models import *
 from spec import Field
 
-__all__ = ['connect', 'clean_connection', 'Model', 'Field']
+VERSION = (0, 1, 2)
+
+__all__ = ['connect', 'clean_connection', 'Model', 'Field', 'VERSION']
+
 
