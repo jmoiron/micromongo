@@ -5,7 +5,8 @@
 
 from setuptools import setup, find_packages
 
-version = '0.1.2'
+from micromongo import VERSION
+version = '.'.join(map(str, VERSION))
 
 # some trove classifiers:
 
